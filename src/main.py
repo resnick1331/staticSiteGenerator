@@ -1,4 +1,3 @@
-import sys
 import os
 print("hello world")
 from textnode import TextNode, TextType

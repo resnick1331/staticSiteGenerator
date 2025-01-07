@@ -1,8 +1,13 @@
 import re
-
 from unittest import TestCase
 
-from extractmarkdown import extract_markdown_images, extract_markdown_links
+from extractmarkdown import (
+    extract_markdown_images, 
+    extract_markdown_links, 
+    extract_title, 
+    markdown_to_blocks,
+    block_to_block_type,
+    )
 
 class TestMarkdownExtraction(TestCase):
     def test_extract_markdown_images(self):
@@ -44,3 +49,54 @@ class TestMarkdownExtraction(TestCase):
 
         # Test text without links
         self.assertEqual(extract_markdown_links("No links here."), [])
+
+    def test_extract_title(self):
+        text = """# Hello, World!
+
+        This is a sample markdown document.
+        """
+
+        self.assertEqual(extract_title(text), "Hello, World!")
+
+    def test_extract_title_no_title(self):
+        text = "No title to show"
+        try:
+            assert extract_title(text) == "No H1 Header found in markdown"
+        except ValueError as e:
+            assert str(e) == "No H1 Header found in markdown"
+            
+class TestMarkdownConvertion(TestCase):
+    
+    def test_markdown_to_blocks(self):
+        markdown = """
+        # This is a heading
+
+        This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+        * This is the first list item in a list block
+        * This is a list item
+        * This is another list item"""
+        expected_blocks = ['# This is a heading', 
+                           'This is a paragraph of text. It has some **bold** and *italic* words inside of it.', 
+                           '* This is the first list item in a list block', 
+                           '* This is a list item', 
+                           '* This is another list item']
+        self.assertEqual(markdown_to_blocks(markdown), expected_blocks)
+    
+    def test_block_to_block_type(self):
+        tests = [
+            ('## Heading with text', 'heading'),
+            ('#Invalid heading', 'paragraph'),
+            ('```\ncode block\n```', 'code'),
+            ('> Line 1\n> Line 2', 'quote'),
+            ('* Item 1\n- Item 2', 'unordered list'),
+            ('1. Item 1\n2. Item 2', 'ordered list'),
+            ('1. Item 1\n2.Not a list', 'paragraph'),
+            ('Plain text block', 'paragraph'),
+            ]
+
+        for text, expected in tests:
+            block_type = block_to_block_type(text.strip())
+            self.assertEqual(block_type, expected)
+        
+
